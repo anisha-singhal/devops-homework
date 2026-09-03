@@ -1,0 +1,51 @@
+# Same three-tier topology as Task 1, declared instead of assembled by hand.
+services:
+
+  frontend:
+    image: nginx:1.27-alpine
+    ports:
+      - "8095:80"
+    volumes:
+      # bind mounts: host files, editable without a rebuild
+      - ./frontend/index.html:/usr/share/nginx/html/index.html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - frontend_net
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_DATABASE: demo
+    networks:
+      # the only service on both networks -- the bridge between tiers
+      - frontend_net
+      - backend_net
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_DATABASE: demo
+    volumes:
+      # named volume: managed by Docker, survives `compose down`
+      - db_data:/var/lib/mysql
+    networks:
+      - backend_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-prootpw"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+networks:
+  frontend_net:
+  backend_net:
+
+volumes:
+  db_data:
