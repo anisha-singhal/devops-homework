@@ -37,9 +37,9 @@ that difference is documented and explained rather than skipped.
 | Linux: `journalctl` | [`01`](01-linux-fundamentals/README.md#task-3--journalctl) |
 | Linux: command cheat sheet | [`01`](01-linux-fundamentals/README.md#task-4--command-cheat-sheet) |
 | Shell: system information script | [`02/sysinfo.sh`](02-shell-scripting/sysinfo.sh) |
-| Networking: commands + explanations | [`03/networking.md`](03-networking-fundamentals/networking.md) |
-| Git: `commit -a -m` vs `commit -m` | [`04/git-tasks.md`](04-git-github/git-tasks.md#task-1--git-commit--m-vs-git-commit--a--m) |
-| Git: cherry-pick | [`04/git-tasks.md`](04-git-github/git-tasks.md#task-2--git-cherry-pick) |
+| Networking: commands + explanations | [`03`](03-networking-fundamentals/README.md) |
+| Git: `commit -a -m` vs `commit -m` | [`04`](04-git-github/README.md#task-1--git-commit--m-vs-git-commit--a--m) |
+| Git: cherry-pick | [`04`](04-git-github/README.md#task-2--git-cherry-pick) |
 | Docker: 6 Hello World apps | [`05`](05-docker-fundamentals/README.md) |
 | Docker: multi-stage build on port 8080 | [`06`](06-dockerfiles-and-images/README.md#task-1--build-and-run-the-provided-multi-stage-dockerfile) |
 | Docker: deploy 3 application types | [`06`](06-dockerfiles-and-images/README.md#task-3--deploy-three-different-application-types) |
@@ -66,10 +66,10 @@ Rather than a summary of each folder, the results that changed how I think about
 - **A container's network view is not the machine's.** `traceroute` to the same host: 2 hops
   from inside a container, 10 hops from macOS. Docker Desktop's VM NATs everything, so the
   internet looks one hop away — `ping` said the same thing with `ttl=63`. Never diagnose
-  network paths from inside a container. → [`03`](03-networking-fundamentals/networking.md#the-same-traceroute-from-the-macos-host)
+  network paths from inside a container. → [`03`](03-networking-fundamentals/README.md#the-same-traceroute-from-the-macos-host)
 
 - **`traceroute`'s `* * *` is about the probe type, not reachability.** The default UDP probes
-  were filtered; `-I` (ICMP) and `-T -p 443` (TCP) both completed instantly. → [`03`](03-networking-fundamentals/networking.md#traceroute--the-path-and-a-lesson-in-probe-types)
+  were filtered; `-I` (ICMP) and `-T -p 443` (TCP) both completed instantly. → [`03`](03-networking-fundamentals/README.md#traceroute--the-path-and-a-lesson-in-probe-types)
 
 - **`rm` removes names, not files.** After deleting the original, the hard link still had all
   the data and its link count had gone from 2 to 1. `Invalid cross-device link` and
@@ -78,7 +78,7 @@ Rather than a summary of each folder, the results that changed how I think about
 
 - **`git commit -a -m` discards deliberate staging.** With `fileA` staged and `fileB` a
   work-in-progress, `-a` committed both and warned about nothing. It still will not pick up
-  untracked files — which is the failure people actually hit. → [`04`](04-git-github/git-tasks.md#the-second-difference--a-overrides-deliberate-staging)
+  untracked files — which is the failure people actually hit. → [`04`](04-git-github/README.md#the-second-difference--a-overrides-deliberate-staging)
 
 - **`docker compose down` keeps your data; `down -v` deletes it.** Same stack, one character
   apart: 3 rows survived `down` and came back on a brand-new container, while after `down -v`
@@ -88,8 +88,8 @@ Rather than a summary of each folder, the results that changed how I think about
   → [`07`](07-docker-networking-volumes/README.md#named-volume-vs-bind-mount)
 
 - **`curl -w` turns "it's slow" into a specific problem** by splitting a request into DNS /
-  TCP / TLS / server think time / transfer. Three different owners, one command. → [`03`](03-networking-fundamentals/networking.md#curl--speaking-http)
+  TCP / TLS / server think time / transfer. Three different owners, one command. → [`03`](03-networking-fundamentals/README.md#curl--speaking-http)
 
 - **Empty output from a diagnostic tool is data.** `ss -tulpn` printed only a header and I
   assumed it was broken in the container. Nothing was listening — the server I thought I had
-  started needed `python3`, which was not installed. → [`03`](03-networking-fundamentals/networking.md#ss--sockets)
+  started needed `python3`, which was not installed. → [`03`](03-networking-fundamentals/README.md#ss--sockets)
