@@ -1,6 +1,6 @@
 # DevOps Homework — Anisha Singhal
 
-Coursework for the DevOps module, covering everything through the Docker sessions. One folder
+Coursework for the DevOps module, covering the Linux through Kubernetes sessions. One folder
 per topic, each with its own README containing the commands that were run, their real output,
 and screenshots where a browser was involved.
 
@@ -16,6 +16,7 @@ and screenshots where a browser was involved.
 | 5 | [`05-docker-fundamentals/`](05-docker-fundamentals/) | Six Hello World containers: Node.js, Python, Java, Apache, React, Nginx |
 | 6 | [`06-dockerfiles-and-images/`](06-dockerfiles-and-images/) | Multi-stage builds, measured against single-stage equivalents |
 | 7 | [`07-docker-networking-volumes/`](07-docker-networking-volumes/) | Three-network topology, host networking, bind mounts, overlay networks, Compose + named volumes |
+| 8 | [`08-kubernetes-services/`](08-kubernetes-services/) | ClusterIP: service discovery, kube-proxy iptables, endpoint churn, empty-endpoint debugging |
 
 ## Environment
 
@@ -23,6 +24,7 @@ and screenshots where a browser was involved.
 - **Linux work:** run inside `ubuntu:24.04` containers, since `journalctl`, `adduser`, `ip`
   and `ss` do not exist on macOS. `journalctl` needed a second container running `systemd` as
   PID 1.
+- **Kubernetes:** a 3-node `kind` cluster (1 control-plane, 2 workers), Kubernetes v1.34.0.
 - **Screenshots:** captured with headless Chromium against the running containers.
 
 Where macOS differs from a native Linux Docker host — most sharply with `--network host` —
@@ -48,6 +50,7 @@ that difference is documented and explained rather than skipped.
 | Docker: bind mount | [`07`](07-docker-networking-volumes/README.md#task-3--bind-mount) |
 | Docker: overlay networks | [`07`](07-docker-networking-volumes/README.md#task-4--overlay-networks-research) |
 | Docker: remaining session exercises (Compose, named volumes) | [`07`](07-docker-networking-volumes/README.md#session-exercises--docker-compose-and-named-volumes) |
+| Kubernetes: ClusterIP service | [`08`](08-kubernetes-services/01-clusterip/README.md) |
 
 ## A few things I actually learned
 
