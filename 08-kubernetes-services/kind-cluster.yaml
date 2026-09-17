@@ -1,0 +1,23 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: devops-lab
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80          # ingress HTTP
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443         # ingress HTTPS
+        hostPort: 443
+        protocol: TCP
+      - containerPort: 30080       # NodePort exercise
+        hostPort: 30080
+        protocol: TCP
+  - role: worker
+  - role: worker

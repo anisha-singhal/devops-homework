@@ -1,0 +1,10 @@
+# The course manifest points at nencyravaliya.me, which currently has no A or NS
+# records, so the CNAME resolves to a dead end. This second service proves the
+# same mechanism end to end against a target that does resolve.
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-web-service
+spec:
+  type: ExternalName
+  externalName: example.com

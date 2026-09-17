@@ -8,7 +8,7 @@ Desktop (macOS arm64). A multi-node cluster was used on purpose so the 3 replica
 different nodes — a single-node cluster hides the most interesting part of what a Service does.
 
 ```bash
-kind create cluster --config kind-cluster.yaml    # 1 control-plane, 2 workers
+kind create cluster --config ../kind-cluster.yaml    # 1 control-plane, 2 workers
 ```
 
 ```
