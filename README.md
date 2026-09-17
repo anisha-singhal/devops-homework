@@ -16,7 +16,10 @@ and screenshots where a browser was involved.
 | 5 | [`05-docker-fundamentals/`](05-docker-fundamentals/) | Six Hello World containers: Node.js, Python, Java, Apache, React, Nginx |
 | 6 | [`06-dockerfiles-and-images/`](06-dockerfiles-and-images/) | Multi-stage builds, measured against single-stage equivalents |
 | 7 | [`07-docker-networking-volumes/`](07-docker-networking-volumes/) | Three-network topology, host networking, bind mounts, overlay networks, Compose + named volumes |
-| 8 | [`08-kubernetes-services/`](08-kubernetes-services/) | ClusterIP: service discovery, kube-proxy iptables, endpoint churn, empty-endpoint debugging |
+| 8 | [`08-kubernetes-fundamentals/`](08-kubernetes-fundamentals/) | Architecture and the reconciliation loop, observed on a live cluster |
+| 9 | [`09-kubernetes-services/`](09-kubernetes-services/) | All five Service types: ClusterIP, NodePort, LoadBalancer, ExternalName, Headless |
+| 10 | [`10-kubernetes-workloads/`](10-kubernetes-workloads/) | Pods, ReplicaSets, Deployments, pod lifecycle, rollout strategies |
+| 11 | [`11-kubernetes-config-ingress/`](11-kubernetes-config-ingress/) | ConfigMaps, Secrets, Ingress routing by host and path |
 
 ## Environment
 
@@ -24,7 +27,8 @@ and screenshots where a browser was involved.
 - **Linux work:** run inside `ubuntu:24.04` containers, since `journalctl`, `adduser`, `ip`
   and `ss` do not exist on macOS. `journalctl` needed a second container running `systemd` as
   PID 1.
-- **Kubernetes:** a 3-node `kind` cluster (1 control-plane, 2 workers), Kubernetes v1.34.0.
+- **Kubernetes:** a 3-node `kind` cluster (1 control-plane, 2 workers), Kubernetes v1.34.0,
+  with MetalLB and ingress-nginx installed for the LoadBalancer and Ingress exercises.
 - **Screenshots:** captured with headless Chromium against the running containers.
 
 Where macOS differs from a native Linux Docker host — most sharply with `--network host` —
@@ -50,7 +54,10 @@ that difference is documented and explained rather than skipped.
 | Docker: bind mount | [`07`](07-docker-networking-volumes/README.md#task-3--bind-mount) |
 | Docker: overlay networks | [`07`](07-docker-networking-volumes/README.md#task-4--overlay-networks-research) |
 | Docker: remaining session exercises (Compose, named volumes) | [`07`](07-docker-networking-volumes/README.md#session-exercises--docker-compose-and-named-volumes) |
-| Kubernetes: ClusterIP service | [`08`](08-kubernetes-services/01-clusterip/README.md) |
+| Kubernetes Fundamentals | [`08`](08-kubernetes-fundamentals/README.md) |
+| Kubernetes Networking & Services | [`09`](09-kubernetes-services/README.md) |
+| Kubernetes Pods, ReplicaSets & Deployments | [`10`](10-kubernetes-workloads/README.md) |
+| Kubernetes Ingress, ConfigMaps & Secrets | [`11`](11-kubernetes-config-ingress/README.md) |
 
 ## A few things I actually learned
 
@@ -89,6 +96,23 @@ Rather than a summary of each folder, the results that changed how I think about
   `depends_on` only waits for a container to *start* — `condition: service_healthy` is what
   actually stops an app racing its database.
   → [`07`](07-docker-networking-volumes/README.md#named-volume-vs-bind-mount)
+
+- **A Deployment never creates pods.** Deployment → ReplicaSet → Pod, verified through
+  `ownerReferences`. `kubectl set image` on a bare ReplicaSet rolls nothing — running pods keep
+  the old image — which is the entire reason Deployments exist.
+  → [`10`](10-kubernetes-workloads/README.md#the-reason-deployments-exist)
+
+- **`Running` is not healthy.** A CrashLoopBackOff pod reports phase `Running`; `READY` is the
+  field that decides whether it gets traffic. `CrashLoopBackOff` and `ImagePullBackOff` are not
+  phases at all. → [`10`](10-kubernetes-workloads/README.md#running-does-not-mean-healthy)
+
+- **Kubernetes Service load balancing is random, not round-robin.** 60 requests split 24/19/17,
+  explained exactly by the kube-proxy `--probability` iptables chain.
+  → [`09`](09-kubernetes-services/README.md#findings-worth-keeping)
+
+- **Base64 is encoding, not encryption**, and `envFrom` puts a Secret into the container
+  environment in plain text. `echo` without `-n` silently appends a newline and produces a
+  password one byte too long. → [`11`](11-kubernetes-config-ingress/README.md#part-2--secret-and-what-it-does-not-do)
 
 - **`curl -w` turns "it's slow" into a specific problem** by splitting a request into DNS /
   TCP / TLS / server think time / transfer. Three different owners, one command. → [`03`](03-networking-fundamentals/README.md#curl--speaking-http)
