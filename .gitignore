@@ -3,3 +3,10 @@ node_modules/
 dist/
 sysinfo-reports/
 devops-reports/
+
+# terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/generated/
