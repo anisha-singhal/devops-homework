@@ -1,0 +1,15 @@
+# The course PVC omits storageClassName, so the default StorageClass ("standard")
+# is injected and a PV is dynamically provisioned instead - the static PV is never used.
+# storageClassName: "" opts out of dynamic provisioning and forces a match
+# against a statically defined PV.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: student-pvc-static
+spec:
+  storageClassName: ""        # <-- the fix
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
