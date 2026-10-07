@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  # Prometheus scraping itself - the default target
+  - job_name: prometheus
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  # A real workload target: node-exporter publishes host/container metrics.
+  # Added so the dashboards below show something other than Prometheus's
+  # own internals.
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node-exporter:9100"]

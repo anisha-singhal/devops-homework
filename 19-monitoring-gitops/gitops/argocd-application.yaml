@@ -1,0 +1,25 @@
+# The GitOps object: it names a git repo + path as the source of truth.
+# ArgoCD continuously compares the cluster to that path and reports drift.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitops-demo
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/anisha-singhal/devops-homework.git
+    targetRevision: main
+    path: 19-monitoring-gitops/gitops/app
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true        # delete objects removed from git
+      selfHeal: true     # revert changes made directly to the cluster
+    syncOptions:
+      - CreateNamespace=true
