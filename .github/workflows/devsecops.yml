@@ -1,0 +1,74 @@
+# Security scanning with an explicit gate. Scans run in parallel; the gate
+# fails the build only on HIGH/CRITICAL, so LOW findings are visible without
+# blocking every merge.
+name: DevSecOps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sast:
+    name: SAST (bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -q bandit
+      - name: Scan the fixed app - must have zero HIGH findings
+        run: |
+          bandit -r 16-devsecops/fixed-app/ -f json -o bandit.json || true
+          high=$(python -c "import json;print(sum(1 for r in json.load(open('bandit.json'))['results'] if r['issue_severity']=='HIGH'))")
+          echo "HIGH severity findings: $high"
+          test "$high" -eq 0
+      - name: Scan the vulnerable sample - expected to find issues
+        run: |
+          bandit -r 16-devsecops/vulnerable-app/ -f json -o vuln.json || true
+          python -c "import json;d=json.load(open('vuln.json'));print(f'vulnerable-app findings: {len(d[\"results\"])} (this sample exists to be found)')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: bandit-reports, path: '*.json', retention-days: 7 }
+
+  sca:
+    name: SCA (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -q pip-audit
+      - name: Audit dependencies
+        run: |
+          echo "--- fixed-app ---"
+          pip-audit -r 16-devsecops/fixed-app/requirements.txt --progress-spinner off || true
+          echo "--- vulnerable-app (expected to be full of CVEs) ---"
+          pip-audit -r 16-devsecops/vulnerable-app/requirements.txt --progress-spinner off || true
+
+  secrets:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }      # gitleaks needs history to scan commits
+      - name: Run gitleaks
+        run: |
+          curl -sL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks detect --no-banner --redact --exit-code 1
+
+  container:
+    name: Container scanning (trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dockerfile misconfiguration - gate on HIGH/CRITICAL
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: 16-devsecops/fixed-app
+          severity: HIGH,CRITICAL
+          exit-code: '1'
