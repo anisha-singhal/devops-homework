@@ -1,0 +1,14 @@
+# A values file is the readable, reviewable alternative to a pile of --set flags.
+replicaCount: 4
+image:
+  repository: nginx
+  tag: "1.27"
+service:
+  type: NodePort
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
