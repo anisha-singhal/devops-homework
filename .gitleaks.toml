@@ -1,0 +1,33 @@
+# gitleaks configuration for this repository.
+#
+# The full-history scan (fetch-depth: 0) flags the Kubernetes Secret manifests
+# committed in 11-kubernetes-config-ingress/. That detection is CORRECT: those
+# files contain base64-encoded credentials in git, which is exactly the pattern
+# a secret scanner should report.
+#
+# They are allowlisted here because they are course exercise values
+# (POSTGRES_PASSWORD = "secretpassword"), published deliberately to demonstrate
+# that base64 is encoding and not encryption. No real credential is involved.
+#
+# This is the exception documented in the file rather than in someone's head -
+# a reviewer can see what was accepted and why. Anything NOT listed here still
+# fails the build.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "kubernetes-secret-yaml"
+description = "Kubernetes Secret manifest"
+regex = '''kind:\s*Secret'''
+[rules.allowlist]
+paths = ['''11-kubernetes-config-ingress/.*''']
+
+[allowlist]
+description = "Course exercise credentials - demo values, not real secrets"
+paths = [
+  '''11-kubernetes-config-ingress/02-secret/db-secret\.yaml''',
+  '''11-kubernetes-config-ingress/02-secret/README\.md''',
+  '''11-kubernetes-config-ingress/04-full-demo/secret\.yaml''',
+  '''11-kubernetes-config-ingress/README\.md''',
+]
