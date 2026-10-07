@@ -34,10 +34,18 @@ jobs:
             | tar -xz -C /usr/local/bin kubeconform
       - name: Validate every manifest against the Kubernetes schema
         run: |
-          # -ignore-missing-schemas: CRDs (MetalLB, Argo) have no upstream schema
-          # -skip: Helm templates are not valid YAML until rendered
+          # Only actual Kubernetes manifests. Excluded, because they are YAML
+          # but not Kubernetes objects and kubeconform rightly rejects them:
+          #   /templates/      Helm templates - not valid YAML until rendered
+          #   Chart.yaml       Helm chart metadata
+          #   values*.yaml     Helm values
+          #   docker-compose   Compose, a different schema entirely
+          #   .github/         workflow definitions
           find . -path ./.git -prune -o \( -name '*.yaml' -o -name '*.yml' \) -print \
             | grep -v '/templates/' \
+            | grep -v '/Chart.yaml' \
+            | grep -v '/values' \
+            | grep -v 'docker-compose' \
             | grep -v '.github/workflows' \
             | xargs kubeconform -strict -ignore-missing-schemas -summary
 
