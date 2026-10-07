@@ -1,6 +1,6 @@
 # DevOps Homework — Anisha Singhal
 
-Coursework for the DevOps module, covering the Linux through Kubernetes sessions. One folder
+Coursework for the DevOps module, all 21 sessions: Linux through the final capstone. One folder
 per topic, each with its own README containing the commands that were run, their real output,
 and screenshots where a browser was involved.
 
@@ -20,6 +20,15 @@ and screenshots where a browser was involved.
 | 9 | [`09-kubernetes-services/`](09-kubernetes-services/) | All five Service types: ClusterIP, NodePort, LoadBalancer, ExternalName, Headless |
 | 10 | [`10-kubernetes-workloads/`](10-kubernetes-workloads/) | Pods, ReplicaSets, Deployments, pod lifecycle, rollout strategies |
 | 11 | [`11-kubernetes-config-ingress/`](11-kubernetes-config-ingress/) | ConfigMaps, Secrets, Ingress routing by host and path |
+| 12 | [`12-kubernetes-storage-hpa-probes/`](12-kubernetes-storage-hpa-probes/) | Volumes, PV/PVC, StorageClasses, probes, HorizontalPodAutoscaler |
+| 13 | [`13-kubernetes-troubleshooting/`](13-kubernetes-troubleshooting/) | Five broken workloads diagnosed and fixed |
+| 14 | [`14-helm/`](14-helm/) | Charts, templating, install/upgrade/rollback, `--atomic` |
+| 15 | [`15-cicd-github-actions/`](15-cicd-github-actions/) | CI pipelines that actually run against this repo |
+| 16 | [`16-devsecops/`](16-devsecops/) | SAST, SCA, secret and container scanning with a gate |
+| 17 | [`17-terraform-iac/`](17-terraform-iac/) | Terraform init/plan/apply/destroy, state, drift |
+| 18 | [`18-cloud-terraform/`](18-cloud-terraform/) | AWS VPC, subnets, routing, security groups |
+| 19 | [`19-monitoring-gitops/`](19-monitoring-gitops/) | Prometheus, Grafana, PromQL, ArgoCD GitOps |
+| 20 | [`20-final-project/`](20-final-project/) | Capstone: FastAPI + React + Postgres to Kubernetes |
 
 ## Environment
 
@@ -28,7 +37,9 @@ and screenshots where a browser was involved.
   and `ss` do not exist on macOS. `journalctl` needed a second container running `systemd` as
   PID 1.
 - **Kubernetes:** a 3-node `kind` cluster (1 control-plane, 2 workers), Kubernetes v1.34.0,
-  with MetalLB and ingress-nginx installed for the LoadBalancer and Ingress exercises.
+  with MetalLB, ingress-nginx, metrics-server and ArgoCD installed as the exercises required.
+- **Also used:** Helm 3.16.3, Terraform 1.9.8, LocalStack (AWS APIs locally), Prometheus,
+  Grafana, bandit, pip-audit, gitleaks and trivy.
 - **Screenshots:** captured with headless Chromium against the running containers.
 
 Where macOS differs from a native Linux Docker host — most sharply with `--network host` —
@@ -58,6 +69,15 @@ that difference is documented and explained rather than skipped.
 | Kubernetes Networking & Services | [`09`](09-kubernetes-services/README.md) |
 | Kubernetes Pods, ReplicaSets & Deployments | [`10`](10-kubernetes-workloads/README.md) |
 | Kubernetes Ingress, ConfigMaps & Secrets | [`11`](11-kubernetes-config-ingress/README.md) |
+| Session 13: Kubernetes Storage, HPA & Probes | [`12`](12-kubernetes-storage-hpa-probes/README.md) |
+| Session 14: Kubernetes Troubleshooting | [`13`](13-kubernetes-troubleshooting/README.md) |
+| Session 15: Helm | [`14`](14-helm/README.md) |
+| Session 16: CI/CD & GitHub Actions | [`15`](15-cicd-github-actions/README.md) |
+| Session 17: Complete CI/CD & DevSecOps | [`16`](16-devsecops/README.md) |
+| Session 18: Terraform & Infrastructure as Code | [`17`](17-terraform-iac/README.md) |
+| Session 19: Cloud & Terraform in Action | [`18`](18-cloud-terraform/README.md) |
+| Session 20: Monitoring, Observability & GitOps | [`19`](19-monitoring-gitops/README.md) |
+| Session 21: Final DevOps Project & Troubleshooting | [`20`](20-final-project/README.md) |
 
 ## A few things I actually learned
 

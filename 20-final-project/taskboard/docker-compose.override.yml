@@ -1,0 +1,10 @@
+# Port 3000 is already taken on this machine by an unrelated node process.
+#
+# Note: compose MERGES list fields, so a plain `ports:` entry here is APPENDED
+# to the base file's list rather than replacing it - the stack still tried to
+# bind 3000 and still failed. The `!override` tag (compose 2.24+) replaces the
+# list instead, which is what was actually wanted.
+services:
+  frontend:
+    ports: !override
+      - "3400:80"

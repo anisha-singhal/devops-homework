@@ -1,0 +1,16 @@
+# Local overrides for the kind cluster.
+# The chart defaults point at ghcr.io/YOUR_ORG/... which does not exist;
+# these images were built locally and loaded with `kind load docker-image`.
+frontend:
+  image: taskboard-frontend
+  tag: local
+backend:
+  image: taskboard-backend
+  tag: local
+replicaCount: 2
+ingress:
+  enabled: true
+  host: taskboard.local
+monitoring:
+  serviceMonitor:
+    enabled: false      # no Prometheus Operator in this cluster, so no CRD for it

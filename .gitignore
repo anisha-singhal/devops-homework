@@ -10,3 +10,8 @@ devops-reports/
 **/terraform.tfstate
 **/terraform.tfstate.backup
 **/generated/
+
+# capstone
+20-final-project/taskboard/backend/test.db
+20-final-project/taskboard/backend/.coverage
+20-final-project/taskboard/frontend/node_modules/
