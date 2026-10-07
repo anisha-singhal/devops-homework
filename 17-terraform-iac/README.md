@@ -2,14 +2,19 @@
 
 Session 18. Terraform **v1.9.8**.
 
-The course manifests provision AWS S3 buckets, which needs credentials and bills a real
-account. This section does two things instead:
+## Contents
 
-- [`aws-reference/`](aws-reference/) — the course's AWS config, **validated** (`init`,
-  `validate`, `fmt`) without applying anything.
-- [`local-lab/`](local-lab/) — an equivalent lab using the `docker`, `local` and `random`
-  providers, taken through the **complete** `init → plan → apply → destroy` cycle against real
-  resources, at zero cost.
+| | Where | Covers |
+|---|---|---|
+| **Task 1** | [`terraform-s3-demo/`](terraform-s3-demo/README.md) | the S3 project — `init` → `fmt` → `validate` → `plan` → `apply` → `show` → `output` → `destroy`, genuinely executed, plus drift detection and a three-minute failure whose root cause took real digging |
+| **Task 2** | [`aws-services/`](aws-services/) | [IAM](aws-services/01-iam/README.md) · [EC2](aws-services/02-ec2/README.md) · [S3](aws-services/03-s3/README.md) · [VPC](aws-services/04-vpc/README.md) · [DynamoDB & RDS](aws-services/05-dynamodb-rds/README.md) |
+| extra | [`aws-reference/`](aws-reference/) | the course's AWS config, validated against real AWS endpoints without credentials |
+| extra | [`local-lab/`](local-lab/) | a second full apply/destroy cycle using the `docker`, `local` and `random` providers |
+
+The S3 project runs against **LocalStack**, so `apply` and `destroy` really execute rather than
+being described — the same provider and resource definitions, pointed at `localhost:4566`
+instead of AWS. `aws-reference/` keeps the credential-less validation against the real AWS
+endpoints, because the error it produces is itself instructive.
 
 Validating a config proves it parses and type-checks. It does not prove it works. Running the
 full cycle on something I can actually create does, so both are here.

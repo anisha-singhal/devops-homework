@@ -67,14 +67,21 @@ that difference is documented and explained rather than skipped.
 | Docker: remaining session exercises (Compose, named volumes) | [`07`](07-docker-networking-volumes/README.md#session-exercises--docker-compose-and-named-volumes) |
 | Kubernetes Fundamentals | [`08`](08-kubernetes-fundamentals/README.md) |
 | Kubernetes Networking & Services | [`09`](09-kubernetes-services/README.md) |
+| — Task 2: object comparisons (Deployment/ReplicaSet/DaemonSet/StatefulSet/Service) | [`09/comparisons`](09-kubernetes-services/comparisons/README.md) |
+| — Task 3: FQDN | [`09/fqdn`](09-kubernetes-services/fqdn/README.md) |
+| — Task 4: CoreDNS | [`09/coredns`](09-kubernetes-services/coredns/README.md) |
 | Kubernetes Pods, ReplicaSets & Deployments | [`10`](10-kubernetes-workloads/README.md) |
 | Kubernetes Ingress, ConfigMaps & Secrets | [`11`](11-kubernetes-config-ingress/README.md) |
 | Session 13: Kubernetes Storage, HPA & Probes | [`12`](12-kubernetes-storage-hpa-probes/README.md) |
+| — Task 1: volumes (emptyDir, hostPath, PV, PVC, StorageClass, dynamic provisioning) | [`12/01-volumes`](12-kubernetes-storage-hpa-probes/01-volumes/README.md) |
+| — Task 3: mini project | [`12/mini-project`](12-kubernetes-storage-hpa-probes/mini-project/README.md) |
 | Session 14: Kubernetes Troubleshooting | [`13`](13-kubernetes-troubleshooting/README.md) |
 | Session 15: Helm | [`14`](14-helm/README.md) |
 | Session 16: CI/CD & GitHub Actions | [`15`](15-cicd-github-actions/README.md) |
 | Session 17: Complete CI/CD & DevSecOps | [`16`](16-devsecops/README.md) |
 | Session 18: Terraform & Infrastructure as Code | [`17`](17-terraform-iac/README.md) |
+| — Task 1: `terraform-s3-demo` | [`17/terraform-s3-demo`](17-terraform-iac/terraform-s3-demo/README.md) |
+| — Task 2: AWS services (IAM, EC2, S3, VPC, DynamoDB & RDS) | [`17/aws-services`](17-terraform-iac/aws-services/) |
 | Session 19: Cloud & Terraform in Action | [`18`](18-cloud-terraform/README.md) |
 | Session 20: Monitoring, Observability & GitOps | [`19`](19-monitoring-gitops/README.md) |
 | Session 21: Final DevOps Project & Troubleshooting | [`20`](20-final-project/README.md) |
@@ -136,6 +143,34 @@ Rather than a summary of each folder, the results that changed how I think about
 
 - **`curl -w` turns "it's slow" into a specific problem** by splitting a request into DNS /
   TCP / TLS / server think time / transfer. Three different owners, one command. → [`03`](03-networking-fundamentals/README.md#curl--speaking-http)
+
+- **`ReadWriteOnce` means one node, not one pod.** Two separate pods of the same Deployment
+  mounted the same RWO claim simultaneously and both read the file the other wrote. Worse, the
+  PV's `nodeAffinity` pinned all five HPA-scaled replicas to a single node of three — an RWO
+  volume plus horizontal autoscaling is an architectural contradiction that YAML validation
+  cannot catch. → [`12/mini-project`](12-kubernetes-storage-hpa-probes/mini-project/README.md#unexpected-result-2--the-hpa-cannot-spread-across-nodes)
+
+- **An HPA scales out in seconds and back in minutes, deliberately.** CPU fell to 1% and the
+  replica count stayed at 5 for four and a half more minutes — the 5-minute downscale
+  stabilization window. Watching for two minutes and concluding it was broken would have been
+  the wrong call. → [`12/mini-project`](12-kubernetes-storage-hpa-probes/mini-project/README.md#scale-down)
+
+- **`hostPath` loses data silently and completely.** The same manifest on a different node
+  produced a Running pod with an empty directory, because `DirectoryOrCreate` helpfully created
+  a new one. No error anywhere. On single-node minikube this never surfaces, which is how it
+  reaches production. → [`12/01-volumes`](12-kubernetes-storage-hpa-probes/01-volumes/README.md#why-hostpath-is-a-trap)
+
+- **`ndots:5` costs three wasted DNS queries per external lookup.** CoreDNS's own query log
+  showed `github.com` resolved only after NXDOMAIN on three search domains — and the misses took
+  0.1 ms while the real query took 3.1 seconds. A trailing dot skips the whole search path and
+  almost nobody uses it. → [`09/fqdn`](09-kubernetes-services/fqdn/README.md#the-ndots5-tax)
+
+- **"Timeout waiting for state" rarely means the write failed.** Terraform spent 3 minutes
+  failing to create an S3 lifecycle rule that LocalStack had written correctly in the first
+  second. Two plausible guesses about rule shape were both wrong; `TF_LOG=DEBUG` plus the
+  provider source showed it compares a `TransitionDefaultMinimumObjectSize` field LocalStack
+  never returns, so the equality check could never pass.
+  → [`17/terraform-s3-demo`](17-terraform-iac/terraform-s3-demo/README.md#the-lifecycle-rule-that-would-not-converge)
 
 - **Empty output from a diagnostic tool is data.** `ss -tulpn` printed only a header and I
   assumed it was broken in the container. Nothing was listening — the server I thought I had

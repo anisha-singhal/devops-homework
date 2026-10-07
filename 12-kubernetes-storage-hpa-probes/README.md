@@ -14,6 +14,14 @@ Without that patch, metrics-server runs but never reports, and the HPA sits on
 `cpu: <unknown>/50%` forever. That failure looks like a broken HPA and is actually a TLS problem
 one layer down.
 
+## Contents
+
+| | Where | Covers |
+|---|---|---|
+| Task 1 | [01-volumes/](01-volumes/README.md) | emptyDir · hostPath · PersistentVolume · PersistentVolumeClaim · StorageClass · dynamic provisioning — each run on the cluster |
+| Task 2 | this file, [Part 4](#part-4--horizontal-pod-autoscaler) | HPA deployment, load generation, scaling observed |
+| Task 3 | [mini-project/](mini-project/README.md) | PVC + HPA + all three probes together, with three results that contradicted the brief |
+
 ## Part 1 — emptyDir: scratch space that dies with the pod
 
 ```bash

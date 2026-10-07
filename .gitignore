@@ -6,7 +6,8 @@ devops-reports/
 
 # terraform
 **/.terraform/
-**/.terraform.lock.hcl
+# .terraform.lock.hcl is deliberately NOT ignored - `terraform init` says to commit it,
+# and it is the only thing guaranteeing the same provider versions on another machine.
 **/terraform.tfstate
 **/terraform.tfstate.backup
 **/generated/

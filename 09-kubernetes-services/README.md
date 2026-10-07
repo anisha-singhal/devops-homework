@@ -35,6 +35,14 @@ nodes:
 | [04](04-externalname/) | `ExternalName` | a CNAME with no proxy, no VIP, no endpoints |
 | [05](05-headless/) | Headless | `clusterIP: None`, DNS returns every pod IP, StatefulSet identity |
 
+## The written tasks
+
+| Task | Folder | Covers |
+|---|---|---|
+| 2 | [comparisons/](comparisons/) | Deployment vs ReplicaSet · Deployment vs DaemonSet vs StatefulSet · ReplicaSet vs Service — each demonstrated on the cluster, not asserted |
+| 3 | [fqdn/](fqdn/) | FQDN structure, Service DNS, the search path, namespace isolation, SRV records, the `ndots:5` tax |
+| 4 | [coredns/](coredns/) | what CoreDNS is, the Corefile line by line, query resolution from its own logs, a deliberate DNS outage and recovery |
+
 ## How they relate
 
 They are not five alternatives — they are layers:
