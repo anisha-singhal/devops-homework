@@ -233,7 +233,7 @@ Design decisions, each a trade-off:
 - **The vulnerable sample is scanned but not gated**, with its findings printed. A scan whose
   failure is expected must not fail the build, or the signal is lost.
 
-## Two failures the pipeline found on its first run
+## Three failures the pipeline found, and what each one meant
 
 ### gitleaks found 6 secrets the filesystem scan missed
 
@@ -298,7 +298,57 @@ party's tagging discipline but pins a version you now maintain yourself. For a s
 specifically, fewer third-party actions in the supply chain is the safer default — a
 compromised action runs with your `GITHUB_TOKEN`.
 
-### After both fixes
+### A third failure, later: a bad rule I wrote myself
+
+Adding the capstone project (session 21) broke the gitleaks job again — three findings:
+
+```
+kubernetes-secret-yaml   20-final-project/taskboard/helm/taskboard/templates/postgres.yaml:2
+    match: kind: Secret
+curl-auth-user           19-monitoring-gitops/README.md:128
+    match: curl -u admin:admin
+curl-auth-user           19-monitoring-gitops/README.md:136
+```
+
+Two of the three came from a rule **I had added to `.gitleaks.toml` myself**:
+
+```toml
+[[rules]]
+id = "kubernetes-secret-yaml"
+regex = '''kind:\s*Secret'''
+```
+
+That matches every Kubernetes Secret **manifest**. A manifest is an object type, not a
+credential — and the file it flagged contains no secret at all:
+
+```yaml
+stringData:
+  password: {{ .Values.postgres.password | quote }}
+```
+
+A template placeholder. The rule was pure false positive, and it was mine.
+
+**The rule was deleted rather than allowlisted.** A detection that fires on every occurrence of
+a common keyword produces noise, and noise is how a scanner gets ignored — the exact failure
+mode the gate design above was trying to avoid. gitleaks' built-in rules already detect real
+credential patterns by entropy, known key prefixes and checksums, which is what actually
+distinguishes a secret from the word "Secret".
+
+The third finding, `curl -u admin:admin`, is Grafana's documented default login appearing in a
+prose example. That one *is* an allowlist case, and it is recorded as such:
+
+```toml
+regexes = [
+  # Grafana's documented default login, used in curl examples in prose.
+  '''admin:admin''',
+]
+```
+
+The distinction is worth keeping: **allowlist a real pattern that is genuinely acceptable here;
+delete a rule that was never measuring anything.** Allowlisting the bad rule would have left it
+firing on every future Secret manifest in the repo.
+
+### After the fixes
 
 ```
 success   SAST (bandit)
@@ -320,6 +370,9 @@ success   Container scanning (trivy)
   still left CVEs in `urllib3` and `click`, two levels down.
 - **Base image choice beat every other control by an order of magnitude** — 2265 → 44 from one
   line, and it is the same change that makes the image smaller.
+- **A scanner is only as good as its rules, and a bad rule is worse than none.** A
+  `kind: Secret` rule I wrote flagged a template placeholder and nothing real; it was deleted,
+  not allowlisted.
 - **Scan scope matters as much as the ruleset.** The same tool found 0 against a directory and
   6 against git history — and the 6 were real.
 - **A gate that blocks on everything gets switched off.** HIGH/CRITICAL blocks, the rest is
