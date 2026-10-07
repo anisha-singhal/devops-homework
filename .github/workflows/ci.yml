@@ -34,20 +34,29 @@ jobs:
             | tar -xz -C /usr/local/bin kubeconform
       - name: Validate every manifest against the Kubernetes schema
         run: |
-          # Only actual Kubernetes manifests. Excluded, because they are YAML
-          # but not Kubernetes objects and kubeconform rightly rejects them:
-          #   /templates/      Helm templates - not valid YAML until rendered
-          #   Chart.yaml       Helm chart metadata
-          #   values*.yaml     Helm values
-          #   docker-compose   Compose, a different schema entirely
-          #   .github/         workflow definitions
-          find . -path ./.git -prune -o \( -name '*.yaml' -o -name '*.yml' \) -print \
-            | grep -v '/templates/' \
-            | grep -v '/Chart.yaml' \
-            | grep -v '/values' \
-            | grep -v 'docker-compose' \
-            | grep -v '.github/workflows' \
-            | xargs kubeconform -strict -ignore-missing-schemas -summary
+          # Select files by CONTENT, not by path.
+          #
+          # The previous version used a growing list of `grep -v` path
+          # exclusions and broke twice as new files arrived (Helm values, a
+          # Prometheus config, a stray workflow file). Those are all YAML and
+          # none are Kubernetes objects, so kubeconform rightly rejected them.
+          #
+          # A real manifest has a top-level `apiVersion:` AND `kind:`. Testing
+          # for that is self-maintaining. Helm templates are still excluded by
+          # path, because they contain both keys but are not valid YAML until
+          # rendered.
+          manifests=$(
+            find . -path ./.git -prune -o \( -name '*.yaml' -o -name '*.yml' \) -print \
+              | grep -v '/templates/' \
+              | while IFS= read -r f; do
+                  if grep -qE '^apiVersion:' "$f" && grep -qE '^kind:' "$f"; then
+                    echo "$f"
+                  fi
+                done
+          )
+          echo "$manifests" | sed 's/^/  /'
+          echo "---"
+          echo "$manifests" | xargs kubeconform -strict -ignore-missing-schemas -summary
 
   dockerfiles:
     name: Lint Dockerfiles

@@ -1,33 +1,40 @@
 # gitleaks configuration for this repository.
-#
-# The full-history scan (fetch-depth: 0) flags the Kubernetes Secret manifests
-# committed in 11-kubernetes-config-ingress/. That detection is CORRECT: those
-# files contain base64-encoded credentials in git, which is exactly the pattern
-# a secret scanner should report.
-#
-# They are allowlisted here because they are course exercise values
-# (POSTGRES_PASSWORD = "secretpassword"), published deliberately to demonstrate
-# that base64 is encoding and not encryption. No real credential is involved.
-#
-# This is the exception documented in the file rather than in someone's head -
-# a reviewer can see what was accepted and why. Anything NOT listed here still
-# fails the build.
 
 [extend]
 useDefault = true
 
-[[rules]]
-id = "kubernetes-secret-yaml"
-description = "Kubernetes Secret manifest"
-regex = '''kind:\s*Secret'''
-[rules.allowlist]
-paths = ['''11-kubernetes-config-ingress/.*''']
+# ---------------------------------------------------------------------------
+# A custom `kind:\s*Secret` rule was tried here and then removed.
+#
+# It matched every Kubernetes Secret *manifest*, which is an object type and
+# not a credential. It fired on
+# 20-final-project/taskboard/helm/taskboard/templates/postgres.yaml, whose
+# only "secret" is {{ .Values.postgres.password }} - a template placeholder
+# with no value in it at all.
+#
+# A rule that reports a finding on every occurrence of a common keyword
+# produces noise and trains people to ignore the scanner. gitleaks' built-in
+# rules already detect real credential patterns (high entropy, known key
+# prefixes, checksums), which is what actually matters.
+# ---------------------------------------------------------------------------
 
 [allowlist]
-description = "Course exercise credentials - demo values, not real secrets"
+description = "Documented defaults and course exercise values - no real credentials"
+
 paths = [
+  # Session 12 exercise: base64 credentials committed deliberately to show
+  # that base64 is encoding, not encryption. Value is "secretpassword".
   '''11-kubernetes-config-ingress/02-secret/db-secret\.yaml''',
   '''11-kubernetes-config-ingress/02-secret/README\.md''',
   '''11-kubernetes-config-ingress/04-full-demo/secret\.yaml''',
   '''11-kubernetes-config-ingress/README\.md''',
+
+  # Session 17 scan target: a deliberately insecure sample that exists to be
+  # found by the scanners. Its findings are reported, not gated.
+  '''16-devsecops/vulnerable-app/.*''',
+]
+
+regexes = [
+  # Grafana's documented default login, used in curl examples in prose.
+  '''admin:admin''',
 ]
