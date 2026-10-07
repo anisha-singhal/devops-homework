@@ -233,6 +233,80 @@ Design decisions, each a trade-off:
 - **The vulnerable sample is scanned but not gated**, with its findings printed. A scan whose
   failure is expected must not fail the build, or the signal is lost.
 
+## Two failures the pipeline found on its first run
+
+### gitleaks found 6 secrets the filesystem scan missed
+
+The local scan of `vulnerable-app/` reported 0. In CI, with `fetch-depth: 0`, it reported 6 —
+and they were somewhere else entirely:
+
+```
+kubernetes-secret-yaml   11-kubernetes-config-ingress/02-secret/db-secret.yaml:2
+generic-api-key          11-kubernetes-config-ingress/02-secret/db-secret.yaml:12
+generic-api-key          11-kubernetes-config-ingress/02-secret/README.md:64
+generic-api-key          11-kubernetes-config-ingress/04-full-demo/secret.yaml:13
+kubernetes-secret-yaml   11-kubernetes-config-ingress/04-full-demo/secret.yaml:2
+generic-api-key          11-kubernetes-config-ingress/README.md:45
+```
+
+**The Kubernetes Secret manifests from session 12**, committed to git with base64 credentials
+in them. The detection is entirely correct — and it demonstrates that session's own lesson from
+the other direction. Session 12 argued that base64 is encoding, not encryption; here a scanner
+treats those files as leaked credentials, because that is what they are.
+
+This is the real reason `sealed-secrets`, `external-secrets` and SOPS exist: a plain Secret
+manifest cannot safely live in a git repository.
+
+These are course exercise values (`POSTGRES_PASSWORD = "secretpassword"`), so they were
+allowlisted — with the reason written into [`.gitleaks.toml`](../.gitleaks.toml) rather than
+left implicit:
+
+```toml
+# They are allowlisted here because they are course exercise values,
+# published deliberately to demonstrate that base64 is encoding and not
+# encryption. No real credential is involved.
+[allowlist]
+paths = [ "11-kubernetes-config-ingress/02-secret/db-secret\.yaml", ... ]
+```
+
+Anything not on that list still fails the build. **An accepted finding should be a reviewable
+line in a config file, not a disabled scan.**
+
+It also settles the earlier question: the filesystem scan missed these because it only looked
+at one directory. **Scan scope is as important as the ruleset.**
+
+### The trivy job never ran at all
+
+```
+##[error]Unable to resolve action `aquasecurity/trivy-action@0.28.0`, unable to find version `0.28.0`
+```
+
+The job failed at **Set up job** — before a single scan executed. A pinned third-party action
+tag that does not exist fails the build in a way that looks like a security failure and is not.
+
+Fixed by installing the binary directly:
+
+```yaml
+- run: |
+    curl -sL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+      | sh -s -- -b /usr/local/bin v0.75.0
+```
+
+Worth stating the trade-off rather than pretending it is a pure win: a pinned action is easier
+to read and gets Dependabot updates; a `curl | sh` install removes a dependency on a third
+party's tagging discipline but pins a version you now maintain yourself. For a security job
+specifically, fewer third-party actions in the supply chain is the safer default — a
+compromised action runs with your `GITHUB_TOKEN`.
+
+### After both fixes
+
+```
+success   SAST (bandit)
+success   SCA (pip-audit)
+success   Secret scanning (gitleaks)
+success   Container scanning (trivy)
+```
+
 ## What I took away
 
 - **The four scans are not interchangeable.** Bandit found two hardcoded credentials that
@@ -246,5 +320,7 @@ Design decisions, each a trade-off:
   still left CVEs in `urllib3` and `click`, two levels down.
 - **Base image choice beat every other control by an order of magnitude** — 2265 → 44 from one
   line, and it is the same change that makes the image smaller.
+- **Scan scope matters as much as the ruleset.** The same tool found 0 against a directory and
+  6 against git history — and the 6 were real.
 - **A gate that blocks on everything gets switched off.** HIGH/CRITICAL blocks, the rest is
   reported, and exceptions are recorded as `# nosec` in the code where a reviewer sees them.
