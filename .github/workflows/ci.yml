@@ -1,0 +1,81 @@
+# Real CI for this repository: lints the shell script, validates every
+# Kubernetes manifest, lints the Dockerfiles, then builds the images.
+# Demonstrates: triggers, sequential + parallel jobs, steps, artifacts.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:          # lets the pipeline be run by hand from the Actions tab
+
+jobs:
+  # ---- these three run in PARALLEL: no `needs`, so they start together ----
+  shellcheck:
+    name: Lint shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run shellcheck
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          shellcheck --severity=warning 02-shell-scripting/sysinfo.sh
+          echo "sysinfo.sh passed shellcheck"
+
+  k8s-manifests:
+    name: Validate Kubernetes manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz \
+            | tar -xz -C /usr/local/bin kubeconform
+      - name: Validate every manifest against the Kubernetes schema
+        run: |
+          # -ignore-missing-schemas: CRDs (MetalLB, Argo) have no upstream schema
+          # -skip: Helm templates are not valid YAML until rendered
+          find . -path ./.git -prune -o \( -name '*.yaml' -o -name '*.yml' \) -print \
+            | grep -v '/templates/' \
+            | grep -v '.github/workflows' \
+            | xargs kubeconform -strict -ignore-missing-schemas -summary
+
+  dockerfiles:
+    name: Lint Dockerfiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run hadolint on each Dockerfile
+        run: |
+          docker pull -q hadolint/hadolint:latest-debian
+          failed=0
+          while IFS= read -r df; do
+            echo "--- $df ---"
+            docker run --rm -i hadolint/hadolint:latest-debian hadolint --failure-threshold error - < "$df" || failed=1
+          done < <(find . -name 'Dockerfile' -not -path './.git/*')
+          exit $failed
+
+  # ---- this one WAITS for the three above (fan-in via `needs`) ----
+  build:
+    name: Build images
+    runs-on: ubuntu-latest
+    needs: [shellcheck, k8s-manifests, dockerfiles]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the six Docker Fundamentals images
+        run: |
+          cd 05-docker-fundamentals
+          for app in nodejs-app python-app java-app Apache-app React-app nginx-app; do
+            tag="hw-$(echo "$app" | tr 'A-Z' 'a-z')"
+            echo "::group::building $app"
+            docker build -q -t "$tag" "./$app"
+            echo "::endgroup::"
+          done
+          docker images --filter 'reference=hw-*' --format '{{.Repository}}\t{{.Size}}' | sort -k2 -h | tee image-sizes.txt
+      - name: Upload the size report as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-sizes
+          path: 05-docker-fundamentals/image-sizes.txt
+          retention-days: 7

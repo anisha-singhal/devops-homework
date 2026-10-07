@@ -1,0 +1,28 @@
+# Demonstrates the matrix strategy: one job definition, many parallel runs.
+name: Matrix
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '02-shell-scripting/**'     # path filter: only runs when this changes
+      - '.github/workflows/matrix.yml'
+
+jobs:
+  python-matrix:
+    name: py${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false              # one failure does not cancel the others
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Check the Flask app imports cleanly
+        run: |
+          python -V
+          pip install -q flask==3.1.0
+          python -c "import ast,sys; ast.parse(open('05-docker-fundamentals/python-app/app.py').read()); print('app.py parses on', sys.version.split()[0])"
